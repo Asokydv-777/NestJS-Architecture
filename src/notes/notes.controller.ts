@@ -6,42 +6,50 @@ import {
   Delete,
   Param,
   Body,
+  NotFoundException,
 } from '@nestjs/common';
 import { NotesService } from './notes.service';
+import { CreateNoteDto } from './dto/create-note.dto';
+import { UpdateNoteDto } from './dto/update-note.dto';
 
 @Controller('notes')
 export class NotesController {
   constructor(private readonly notesService: NotesService) {}
+
   @Get()
   findAll() {
     return this.notesService.findAll();
   }
 
   @Get(':id')
-  findone(@Param('id') id: string) {
+  findOne(@Param('id') id: string) {
     const note = this.notesService.findOne(Number(id));
-
-    return { data: note };
+    if (!note) {
+      throw new NotFoundException(`Note with id ${id} not found`);
+    }
+    return note;
   }
 
   @Post()
-  create(@Body() body: { title: string; content: string }) {
-    const note = this.notesService.create(body.title, body.content);
-    return { data: note };
+  create(@Body() dto: CreateNoteDto) {
+    return this.notesService.create(dto.title, dto.content);
   }
 
   @Put(':id')
-  update(
-    @Param('id') id: string,
-    @Body() body: { title: string; content: string },
-  ) {
-    const note = this.notesService.update(Number(id), body.title, body.content);
-
-    return { data: note };
+  update(@Param('id') id: string, @Body() dto: UpdateNoteDto) {
+    const note = this.notesService.update(Number(id), dto.title, dto.content);
+    if (!note) {
+      throw new NotFoundException(`Note with id ${id} not found`);
+    }
+    return note;
   }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
-    this.notesService.remove(Number(id));
-    return { message: 'note has been deleted' };
+    const note = this.notesService.remove(Number(id));
+    if (!note) {
+      throw new NotFoundException(`Note with id ${id} not found`);
+    }
+    return { message: 'Note deleted successfully' };
   }
 }
